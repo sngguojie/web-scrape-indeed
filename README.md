@@ -12,4 +12,4 @@ $ python main.py {Job Query}
 
 ## Reference
 
-Created with reference to (https://medium.com/@msalmon00/web-scraping-job-postings-from-indeed-96bd588dcb4b)[https://medium.com/@msalmon00/web-scraping-job-postings-from-indeed-96bd588dcb4b]
+Created with reference to https://medium.com/@msalmon00/web-scraping-job-postings-from-indeed-96bd588dcb4b
