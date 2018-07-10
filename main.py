@@ -1,8 +1,14 @@
+import datetime
+import sys
+import os
+import errno
+
 import requests
 import bs4
 from bs4 import BeautifulSoup
 import pandas as pd
 import time
+from tqdm import tqdm
 
 def extract_summary_from_result(soup): 
   summaries = []
@@ -54,18 +60,27 @@ def extract_job_title_from_result(soup):
   return jobs
 
 
-def main():
+def main(query):
+  timestamp = datetime.datetime.now().isoformat('_')
+  print "Saving results in directory: `results_{timestamp}`".format(timestamp=timestamp)
+  os.mkdir("results_{timestamp}".format(timestamp=timestamp))
+
   max_results_per_city = 100
   num_results_per_page = 10
-  city_set = ['New+York', 'Chicago', 'San+Francisco', 'Austin', 'Seattle', 'Los+Angeles', 'Philadelphia', 'Atlanta', 'Dallas', 'Pittsburgh', 'Portland', 'Phoenix', 'Denver', 'Houston', 'Miami', 'Washington+DC', 'Boulder']
+  city_set = ['New York', 'Chicago', 'San Francisco', 'Austin', 'Seattle', 'Los Angeles', 'Philadelphia', 'Atlanta', 'Dallas', 'Pittsburgh', 'Portland', 'Phoenix', 'Denver', 'Houston', 'Miami', 'Washington DC', 'Boulder']
   columns = ['city', 'job_title', 'company_name', 'location', 'salary', 'summary']
-
 
   # scraping code:
   for city in city_set:
+    print "Starting {city}".format(city=city)
     sample_df = pd.DataFrame(columns=columns)
-    for start in range(0, max_results_per_city, num_results_per_page):
-      page = requests.get("https://www.indeed.com/jobs?q=translator&l={city}&start={start}".format(city=city, start=start))
+    for start in tqdm(range(0, max_results_per_city, num_results_per_page)):
+      page = requests.get("https://www.indeed.com/jobs",
+                          params={
+                            'q': query,
+                            'l': city,
+                            'start': start
+                          })
       time.sleep(1)  # ensuring at least 1 second between page grabs
       soup = BeautifulSoup(page.text, "html.parser")
       job_titles =  extract_job_title_from_result(soup)
@@ -77,8 +92,13 @@ def main():
       for i in range(len(job_titles)):
         job_post = [city, job_titles[i], companies[i], locations[i], salaries[i], summaries[i]]
         sample_df.loc[len(sample_df) + 1] = job_post
-    sample_df.to_csv('results/{city}.csv'.format(city=city), encoding='utf-8')
+    sample_df.to_csv('results_{timestamp}/{city}.csv'.format(timestamp=timestamp, city=city), encoding='utf-8')
 
 
 if __name__ == '__main__':
-    main()
+  try:
+    query = sys.argv[1]
+    main(query)
+  except IndexError:
+    print "Usage: `python main.py {Job Query}`"
+
